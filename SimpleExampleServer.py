@@ -7,6 +7,7 @@ import signal
 import sys
 import ssl
 import logging
+import time
 from SimpleWebSocketServer import WebSocket, SimpleWebSocketServer, SimpleSSLWebSocketServer
 from optparse import OptionParser
 
@@ -36,20 +37,25 @@ class SimpleChat(WebSocket):
     def handleMessage(self):
         if self.data is None:
             self.data = ''
-
+        print "Receiving from... " + self.address[0] +  ":" + str(self.address[1])
         for client in self.server.connections.itervalues():
-            if client != self:
+            if client != self and self.data != "getTime":
                 try:
-                    client.sendMessage(str(self.address[0]) + ' - ' + str(self.data))
+                    print "Sending to ... " + str(client.address[0]) + ":" + str(client.address[1])
+                    client.sendMessage(str(self.address[0]) + ":" + str(self.address[1]) + ' - ' + str(self.data))
                 except Exception as n:
                     print n
+            elif self.data == "getTime":
+                print "Sending current time to... " + str(client.address[0]) + ":" + str(client.address[1])
+                currentTime = time.strftime("%c")
+                client.sendMessage("Fecha y hora actual: " + currentTime)
 
     def handleConnected(self):
         print self.address, 'connected'
         for client in self.server.connections.itervalues():
             if client != self:
                 try:
-                    client.sendMessage(str(self.address[0]) + ' - connected')
+                    client.sendMessage(str(self.address[0]) + ":" + str(self.address[1]) + ' - connected')
                 except Exception as n:
                     print n
 
@@ -58,7 +64,7 @@ class SimpleChat(WebSocket):
         for client in self.server.connections.itervalues():
             if client != self:
                 try:
-                    client.sendMessage(str(self.address[0]) + ' - disconnected')
+                    client.sendMessage(str(self.address[0]) + ":" + str(self.address[1]) + ' - disconnected')
                 except Exception as n:
                     print n
 
